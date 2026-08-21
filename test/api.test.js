@@ -115,7 +115,169 @@ test('GET /api/v1/schools searches across institutions', async () => {
   assert.equal(res.status, 200);
   const body = await res.json();
   assert.ok(body.total > 0);
-  assert.ok(body.results.every((r) => r.school_name.toLowerCase().includes('engineering')));
+  assert.ok(body.results.every((r) => r.name.toLowerCase().includes('engineering')));
+});
+
+test('GET /api/v1/institutions/:slug/departments lists departments with their school', async () => {
+  const res = await fetch(`${baseUrl}/api/v1/institutions/bayero-university-kano/departments`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.ok(body.total > 0);
+  const withDepts = body.departments.find((d) => d.school.name === 'College of Health Sciences');
+  assert.ok(withDepts);
+  assert.ok(withDepts.school.id);
+});
+
+test('GET /api/v1/departments requires nothing but supports q/type/category/state filters', async () => {
+  const res = await fetch(`${baseUrl}/api/v1/departments?q=Computer&limit=5`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.ok(body.total > 0);
+  assert.ok(body.results.every((r) => r.name.toLowerCase().includes('computer')));
+  assert.ok(body.results[0].institution.slug);
+  assert.ok(body.results[0].school.name);
+});
+
+test('GET /api/v1/departments/:id returns a single department', async () => {
+  const listRes = await fetch(`${baseUrl}/api/v1/departments?q=Computer&limit=1`);
+  const listBody = await listRes.json();
+  const id = listBody.results[0].id;
+
+  const res = await fetch(`${baseUrl}/api/v1/departments/${id}`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.id, id);
+  assert.ok(body.school.name);
+  assert.ok(body.institution.slug);
+});
+
+test('GET /api/v1/departments/:id 404s for an unknown id', async () => {
+  const res = await fetch(`${baseUrl}/api/v1/departments/999999999`);
+  assert.equal(res.status, 404);
+});
+
+test('GET /api/v1/schools/:id returns a single school with its departments', async () => {
+  const listRes = await fetch(`${baseUrl}/api/v1/schools?q=Engineering&limit=1`);
+  const listBody = await listRes.json();
+  const id = listBody.results[0].id;
+
+  const res = await fetch(`${baseUrl}/api/v1/schools/${id}`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.id, id);
+  assert.ok(Array.isArray(body.departments));
+  assert.ok(body.institution.slug);
+});
+
+test('GET /api/v1/stats reports course-of-study coverage', async () => {
+  const res = await fetch(`${baseUrl}/api/v1/stats`);
+  const body = await res.json();
+  assert.ok(body.total_courses > 0);
+  assert.ok(body.course_data_coverage.institutions_with_course_data > 0);
+  assert.ok(body.course_data_coverage.by_qualification.ND > 0);
+  assert.ok(body.course_data_coverage.by_qualification.HND > 0);
+  assert.ok(body.course_data_coverage.by_qualification.NCE > 0);
+  assert.ok(body.course_data_coverage.by_source.inferred > 0);
+});
+
+test('institution detail flags departments with course-of-study data', async () => {
+  const res = await fetch(`${baseUrl}/api/v1/institutions/bayero-university-kano`);
+  const body = await res.json();
+  const departments = body.schools.flatMap((s) => s.departments);
+  assert.ok(departments.length > 0);
+  assert.ok(departments.every((d) => d.courses_available === true));
+});
+
+test('GET /api/v1/departments/:id/courses returns qualification-tagged course-of-study rows', async () => {
+  const deptRes = await fetch(`${baseUrl}/api/v1/institutions/bayero-university-kano/departments`);
+  const deptBody = await deptRes.json();
+  const target = deptBody.departments[0];
+  assert.ok(target);
+
+  const res = await fetch(`${baseUrl}/api/v1/departments/${target.id}/courses`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.courses_available, true);
+  assert.ok(body.courses.length > 0);
+  assert.ok(body.courses[0].title);
+  assert.ok(body.courses[0].qualification);
+  assert.equal(body.courses[0].source, 'inferred');
+});
+
+test('GET /api/v1/departments/:id/courses 404s for an unknown department', async () => {
+  const res = await fetch(`${baseUrl}/api/v1/departments/999999999/courses`);
+  assert.equal(res.status, 404);
+});
+
+test('polytechnic departments generate both ND and HND course-of-study rows', async () => {
+  const deptRes = await fetch(`${baseUrl}/api/v1/departments?type=polytechnic&limit=1`);
+  const deptBody = await deptRes.json();
+  assert.ok(deptBody.results.length > 0, 'expected at least one polytechnic department');
+  const id = deptBody.results[0].id;
+
+  const res = await fetch(`${baseUrl}/api/v1/departments/${id}/courses`);
+  const body = await res.json();
+  const quals = body.courses.map((c) => c.qualification).sort();
+  assert.deepEqual(quals, ['HND', 'ND']);
+});
+
+test('college of education departments generate a single NCE course-of-study row', async () => {
+  const deptRes = await fetch(`${baseUrl}/api/v1/departments?type=college_of_education&limit=1`);
+  const deptBody = await deptRes.json();
+  assert.ok(deptBody.results.length > 0, 'expected at least one college of education department');
+  const id = deptBody.results[0].id;
+
+  const res = await fetch(`${baseUrl}/api/v1/departments/${id}/courses`);
+  const body = await res.json();
+  assert.equal(body.courses.length, 1);
+  assert.equal(body.courses[0].qualification, 'NCE');
+});
+
+test('GET /api/v1/courses searches by title across institutions', async () => {
+  const res = await fetch(`${baseUrl}/api/v1/courses?q=Science&limit=5`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.ok(body.total > 0);
+  assert.ok(body.results[0].qualification);
+  assert.ok(body.results[0].department.name);
+  assert.ok(body.results[0].institution.slug);
+});
+
+test('GET /api/v1/courses filters by qualification', async () => {
+  const res = await fetch(`${baseUrl}/api/v1/courses?qualification=HND&limit=25`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.ok(body.total > 0);
+  assert.ok(body.results.every((r) => r.qualification === 'HND'));
+});
+
+test('GET /api/v1/courses filters by institution_slug', async () => {
+  const res = await fetch(`${baseUrl}/api/v1/courses?institution_slug=bayero-university-kano&limit=100`);
+  const body = await res.json();
+  assert.ok(body.total > 0);
+  assert.ok(body.results.every((r) => r.institution.slug === 'bayero-university-kano'));
+});
+
+test('GET /api/v1/courses/:id returns a single course of study with full context', async () => {
+  const listRes = await fetch(`${baseUrl}/api/v1/courses?limit=1`);
+  const listBody = await listRes.json();
+  const id = listBody.results[0].id;
+
+  const res = await fetch(`${baseUrl}/api/v1/courses/${id}`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.id, id);
+  assert.ok(body.title);
+  assert.ok(body.qualification);
+  assert.equal(body.source, 'inferred');
+  assert.equal(body.section, null);
+  assert.ok(body.department.name);
+  assert.ok(body.institution.slug);
+});
+
+test('GET /api/v1/courses/:id 404s for an unknown id', async () => {
+  const res = await fetch(`${baseUrl}/api/v1/courses/999999999`);
+  assert.equal(res.status, 404);
 });
 
 test('GET /api/v1/states lists states with counts', async () => {

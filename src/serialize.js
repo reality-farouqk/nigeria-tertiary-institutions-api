@@ -14,21 +14,17 @@ function serializeInstitution(row, { withSchools = false, schools = [] } = {}) {
   };
   if (withSchools) {
     out.schools = schools.map((s) => ({
+      id: s.id,
       name: s.name,
-      departments: safeParseArray(s.departments),
+      departments: (s.departments || []).map((d) => ({
+        id: d.id,
+        name: d.name,
+        courses_available: Boolean(d.courses_available),
+      })),
     }));
     out.schools_parsed = out.schools.length > 0;
   }
   return out;
-}
-
-function safeParseArray(text) {
-  try {
-    const val = JSON.parse(text);
-    return Array.isArray(val) ? val : [];
-  } catch {
-    return [];
-  }
 }
 
 module.exports = { serializeInstitution };

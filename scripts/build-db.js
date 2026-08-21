@@ -5,6 +5,7 @@ const path = require('path');
 const Database = require('better-sqlite3');
 const { parseCsv } = require('./csv');
 const { parseStructure } = require('../src/parse');
+const { generateCoursesOfStudy } = require('./generate-courses-of-study');
 
 const ROOT = path.join(__dirname, '..');
 const DATA_DIR = path.join(ROOT, 'data');
@@ -79,7 +80,14 @@ function main() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       institution_id INTEGER NOT NULL REFERENCES institutions(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
-      departments TEXT,
+      position INTEGER
+    );
+
+    CREATE TABLE departments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      school_id INTEGER NOT NULL REFERENCES schools(id) ON DELETE CASCADE,
+      institution_id INTEGER NOT NULL REFERENCES institutions(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
       position INTEGER
     );
 
@@ -89,6 +97,32 @@ function main() {
     CREATE INDEX idx_institutions_name ON institutions(name COLLATE NOCASE);
     CREATE INDEX idx_schools_institution ON schools(institution_id);
     CREATE INDEX idx_schools_name ON schools(name COLLATE NOCASE);
+    CREATE INDEX idx_departments_school ON departments(school_id);
+    CREATE INDEX idx_departments_institution ON departments(institution_id);
+    CREATE INDEX idx_departments_name ON departments(name COLLATE NOCASE);
+
+    CREATE TABLE sections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      department_id INTEGER NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      position INTEGER
+    );
+
+    CREATE TABLE courses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      department_id INTEGER NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
+      section_id INTEGER REFERENCES sections(id) ON DELETE CASCADE,
+      qualification TEXT NOT NULL,
+      title TEXT NOT NULL,
+      source TEXT NOT NULL DEFAULT 'inferred',
+      position INTEGER
+    );
+
+    CREATE INDEX idx_sections_department ON sections(department_id);
+    CREATE INDEX idx_courses_department ON courses(department_id);
+    CREATE INDEX idx_courses_section ON courses(section_id);
+    CREATE INDEX idx_courses_title ON courses(title COLLATE NOCASE);
+    CREATE INDEX idx_courses_qualification ON courses(qualification COLLATE NOCASE);
   `);
 
   const insertInstitution = db.prepare(`
@@ -96,13 +130,18 @@ function main() {
     VALUES (@type, @name, @slug, @category, @state, @year_established, @website, @structure_raw, @source_serial)
   `);
   const insertSchool = db.prepare(`
-    INSERT INTO schools (institution_id, name, departments, position)
-    VALUES (@institution_id, @name, @departments, @position)
+    INSERT INTO schools (institution_id, name, position)
+    VALUES (@institution_id, @name, @position)
+  `);
+  const insertDepartment = db.prepare(`
+    INSERT INTO departments (school_id, institution_id, name, position)
+    VALUES (@school_id, @institution_id, @name, @position)
   `);
 
   const usedSlugs = new Set();
   const counts = {};
   let schoolRowCount = 0;
+  let departmentRowCount = 0;
   let parsedInstitutionsWithSchools = 0;
 
   const insertAll = db.transaction(() => {
@@ -142,25 +181,40 @@ function main() {
         const schools = parseStructure(structureRaw);
         if (schools.length) parsedInstitutionsWithSchools++;
         schools.forEach((school, idx) => {
-          insertSchool.run({
+          const schoolInfo = insertSchool.run({
             institution_id: info.lastInsertRowid,
             name: school.name,
-            departments: JSON.stringify(school.departments || []),
             position: idx,
           });
           schoolRowCount++;
+
+          (school.departments || []).forEach((deptName, dIdx) => {
+            insertDepartment.run({
+              school_id: schoolInfo.lastInsertRowid,
+              institution_id: info.lastInsertRowid,
+              name: deptName,
+              position: dIdx,
+            });
+            departmentRowCount++;
+          });
         });
       }
     }
   });
 
   insertAll();
+
+  const courseStats = generateCoursesOfStudy(db);
+
   db.close();
 
   console.log('Database built:', DB_PATH);
   console.log('Institutions per source:', counts);
   console.log('Institutions with at least one parsed school/faculty entry:', parsedInstitutionsWithSchools);
   console.log('Total parsed school/faculty rows:', schoolRowCount);
+  console.log('Total parsed department rows:', departmentRowCount);
+  console.log('Departments processed for course-of-study generation:', courseStats.departmentsProcessed);
+  console.log('Course-of-study rows generated (source=inferred):', courseStats.courseCount);
 }
 
 main();
