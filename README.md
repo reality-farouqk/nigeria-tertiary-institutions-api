@@ -107,10 +107,58 @@ commit or manually copy the `.sqlite` file. `PORT` is read from the
 environment (defaults to `3000`); most PaaS hosts set this for you
 automatically.
 
+### Requiring an API key
+
+By default the API is open — no key needed. To lock it down, set an `API_KEY`
+environment variable to a secret value; every request under `/api/v1/*` will
+then need to send it back, or get a `401`. `/healthz` always stays open (so
+your host's health checks don't need to know the key).
+
+On Render: open your service → **Environment** tab → **Add Environment
+Variable** → key `API_KEY`, value a long random string (e.g. generate one
+with `openssl rand -hex 32`). Save, and Render redeploys automatically. The
+same works on Railway/Fly.io (their dashboards have an equivalent
+"Environment"/"Secrets" tab) or as `-e API_KEY=...` on `docker run`.
+
+To issue separate keys per consumer (so you can revoke one without rotating
+everyone else), set `API_KEY` to a comma-separated list:
+
+```
+API_KEY=key-for-my-frontend,key-for-partner-x,key-for-internal-script
+```
+
+Callers send their key as either header:
+
+```js
+fetch('https://your-app.onrender.com/api/v1/institutions', {
+  headers: { 'X-API-Key': 'key-for-my-frontend' },
+});
+```
+
+```js
+fetch('https://your-app.onrender.com/api/v1/institutions', {
+  headers: { Authorization: 'Bearer key-for-my-frontend' },
+});
+```
+
+A request without a valid key gets:
+
+```json
+{ "error": "Missing or invalid API key. Pass it via the X-API-Key header (or Authorization: Bearer <key>)." }
+```
+
+This is a shared-secret check, not per-user auth or rate limiting — anyone
+holding a valid key has full read access. It's meant to stop anonymous
+scraping/abuse of a public deployment, not to gate access per end-user. If
+you need real user accounts, quotas, or per-key rate limits, put a gateway
+(Cloudflare, Kong, a small API-gateway service) in front instead of extending
+this middleware.
+
 ### Using it from your own projects
 
 Once it's hosted, it's just a normal REST API — call it from anywhere with
-`fetch`/`axios`/whatever your stack uses, no SDK or API key required:
+`fetch`/`axios`/whatever your stack uses, no SDK required (add the
+`X-API-Key` header shown above if you've set `API_KEY`):
 
 ```js
 const res = await fetch('https://your-app.onrender.com/api/v1/institutions?type=university&state=Lagos');
@@ -124,15 +172,18 @@ const res = await fetch('https://your-app.onrender.com/api/v1/departments?q=Comp
 
 If you're calling it from a browser app, CORS is already wide open (`cors()`
 with no origin restriction) — lock that down in `src/app.js` if you're
-running a public instance and want to restrict who can call it. If you expect
-real traffic, put a CDN/reverse-proxy cache (Cloudflare, etc.) in front — the
-data only changes when you redeploy, so aggressive caching is safe and will
-save you hosting cost.
+running a public instance and want to restrict who can call it. Note that an
+API key alone doesn't hide the key from a browser's network tab, so if you
+also need to keep the key secret, call the API from your backend rather than
+directly from client-side JS. If you expect real traffic, put a CDN/
+reverse-proxy cache (Cloudflare, etc.) in front — the data only changes when
+you redeploy, so aggressive caching is safe and will save you hosting cost.
 
 ## API reference
 
-Base URL: `/api/v1`. All responses are JSON. There is no authentication and no
-rate limiting on self-hosted instances — add your own if you're running this
+Base URL: `/api/v1`. All responses are JSON. No authentication is required
+unless you've set `API_KEY` (see "Requiring an API key" above), and there's
+no rate limiting on self-hosted instances — add your own if you're running this
 publicly at scale.
 
 ### `GET /api/v1`

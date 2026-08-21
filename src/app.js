@@ -3,6 +3,7 @@
 const express = require('express');
 const cors = require('cors');
 const routes = require('./routes');
+const { apiKeyAuth } = require('./auth');
 
 const app = express();
 
@@ -13,11 +14,13 @@ app.get('/', (req, res) => {
   res.redirect('/api/v1');
 });
 
+// Deliberately not behind the API key, so uptime/health checks (Render's
+// included) keep working without needing to know a secret.
 app.get('/healthz', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.use('/api/v1', routes);
+app.use('/api/v1', apiKeyAuth, routes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
