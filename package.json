@@ -1,0 +1,41 @@
+{
+  "name": "nigeria-tertiary-institutions-api",
+  "version": "1.0.0",
+  "description": "Open, free REST API and dataset for every Nigerian university, polytechnic, and college of education, including their faculties/schools/departments.",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "src/app.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build-db": "node scripts/build-db.js",
+    "prestart": "node scripts/build-db.js",
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js",
+    "test": "node scripts/build-db.js && node --test test/*.test.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "keywords": [
+    "nigeria",
+    "education",
+    "api",
+    "universities",
+    "polytechnics",
+    "colleges-of-education",
+    "open-data"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_GITHUB_USERNAME/nigeria-tertiary-institutions-api.git"
+  },
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/YOUR_GITHUB_USERNAME/nigeria-tertiary-institutions-api/issues"
+  },
+  "homepage": "https://github.com/YOUR_GITHUB_USERNAME/nigeria-tertiary-institutions-api#readme"
+}
