@@ -28,6 +28,12 @@ Please keep the existing style when editing a "structure" cell (`Faculties` /
 
 - Semicolon-separated `School of X (Dept A, Dept B)` entries where a formal
   structure is published.
+
+- **Quote the cell if you add departments to it.** Department lists contain
+  commas, and an unquoted cell silently splits into extra columns. `build-db`
+  does not error when this happens — it parses the truncated cell, reports
+  success, and the department count quietly drops. `npm test` catches it via
+  `test/data.test.js`, so run that after editing a CSV.
 - If no formal structure is published, say so honestly rather than inventing
   one — e.g. *"Faculty/school structure not clearly itemized in public
   sources; known programme areas include X, Y, Z"*. See `data/DATA_NOTES.md`
