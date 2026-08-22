@@ -11,6 +11,14 @@
  *
  * A row that does not have exactly the expected column count is always a bug,
  * so it is cheap to assert and catches the whole class.
+ *
+ * Column count alone is not sufficient, though. A row was once mangled so that
+ * the name split in two ("Bayero University / Kano") while the website and
+ * structure cells merged into one — two errors that cancelled out to leave the
+ * count at seven. The name still parsed, so nothing failed until an API test
+ * asked for the institution by slug and got a 404. The per-column shape checks
+ * below exist for that: a website cell must look like a URL, and a name must
+ * not carry the stray quotes that quoting damage leaves behind.
  */
 
 const test = require('node:test');
@@ -62,5 +70,33 @@ for (const { file, structureColumn } of FILES) {
       [],
       'unbalanced brackets in a structure cell — the row is probably split',
     );
+  });
+
+  test(`${file}: no cell shows quoting damage`, () => {
+    // Only the name and website columns are checked. The structure column
+    // carries research notes that legitimately quote phrases from sources
+    // ("newly established", "Institute" rather than "School"), so a quote there
+    // proves nothing. In a name or a URL it is always damage.
+    const damaged = [];
+    const nameColumn = Object.keys(rows[0])[1];
+
+    rows.forEach((row, i) => {
+      const line = i + 2;
+
+      const name = row[nameColumn] || '';
+      if (name.includes('"')) {
+        damaged.push(`line ${line}, ${nameColumn}: stray quote in ${JSON.stringify(name.slice(0, 60))}`);
+      }
+
+      // A website cell that swallowed the next column is the other half of the
+      // same failure, and it is the one that silently changes an institution's
+      // slug. Empty is fine — plenty of institutions publish no site.
+      const website = row.Website || '';
+      if (website && !/^https?:\/\/[^\s,"]+$/.test(website)) {
+        damaged.push(`line ${line}: Website is not a bare URL — ${JSON.stringify(website.slice(0, 60))}`);
+      }
+    });
+
+    assert.deepEqual(damaged, [], 'a cell was damaged by incorrect CSV quoting');
   });
 }
