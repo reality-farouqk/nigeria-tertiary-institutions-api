@@ -131,6 +131,15 @@ Two consequences, both deliberate:
   programme name does not stay a guess once a student picks it as their
   department and attaches material to it. Fill it from a published list or leave
   it empty.
+- **A programme list that exists but is not good enough is still prose.** The one
+  row here is the case in point: a directory listing under the college's former
+  Tudun Wada name does itemize five National Diploma programmes, and the
+  structure cell names them. They are not itemized into departments, because a
+  directory entry is not an accreditation record and nothing confirms it against
+  the college. The itemization bar is a source that publishes the structure
+  authoritatively, and "we found a list somewhere" is below it — a parsed
+  department is picked by students and accumulates material under it, so the
+  cost of being wrong is not symmetric with the cost of waiting.
 
 If you have a verified health-sciences institution to add, open an issue or a PR
 (see `CONTRIBUTING.md`) with the source you used. The structure column follows
