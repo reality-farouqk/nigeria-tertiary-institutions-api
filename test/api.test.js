@@ -35,20 +35,58 @@ test('GET /healthz returns ok', async () => {
   assert.equal(body.status, 'ok');
 });
 
-test('GET /api/v1/stats returns totals for all three institution types', async () => {
+test('GET /api/v1/stats totals agree with the per-type breakdown', async () => {
   const res = await fetch(`${baseUrl}/api/v1/stats`);
   assert.equal(res.status, 200);
   const body = await res.json();
-  assert.equal(body.total_institutions, body.by_type.university + body.by_type.polytechnic + body.by_type.college_of_education);
-  assert.ok(body.by_type.university > 0);
-  assert.ok(body.by_type.polytechnic > 0);
-  assert.ok(body.by_type.college_of_education > 0);
+
+  // Summed rather than named, so adding a type does not silently leave this
+  // assertion checking a subset of the catalogue.
+  const summed = Object.values(body.by_type).reduce((a, b) => a + b, 0);
+  assert.equal(body.total_institutions, summed);
+
+  for (const [type, count] of Object.entries(body.by_type)) {
+    assert.ok(count > 0, `${type} has no institutions`);
+  }
 });
 
-test('GET /api/v1/types lists the three valid types', async () => {
+test('GET /api/v1/types lists every type present in the data', async () => {
   const res = await fetch(`${baseUrl}/api/v1/types`);
   const body = await res.json();
-  assert.deepEqual(body.types, ['university', 'polytechnic', 'college_of_education']);
+  assert.deepEqual(body.types, [
+    'university',
+    'polytechnic',
+    'college_of_education',
+    'college_of_health_science_and_technology',
+  ]);
+
+  // Every advertised type must actually be queryable, and every type in the
+  // data must be advertised — a type added to one list and not the other is
+  // the failure this catches.
+  const stats = await (await fetch(`${baseUrl}/api/v1/stats`)).json();
+  assert.deepEqual(Object.keys(stats.by_type).sort(), [...body.types].sort());
+});
+
+test('a college of health science and technology is served with no invented structure', async () => {
+  const slug = 'islamic-medical-foundation-college-of-health-science-and-technology';
+
+  const res = await fetch(`${baseUrl}/api/v1/institutions/${slug}`);
+  assert.equal(res.status, 200);
+  const inst = await res.json();
+  assert.equal(inst.type, 'college_of_health_science_and_technology');
+  assert.equal(inst.category, 'Private');
+  assert.equal(inst.state, 'Kaduna State');
+
+  // The structure cell is a prose provenance note, not a department list. It
+  // must not be parsed into faculties, because a parsed faculty becomes
+  // something a student picks when uploading material.
+  const schools = await (await fetch(`${baseUrl}/api/v1/institutions/${slug}/schools`)).json();
+  assert.deepEqual(schools.schools, []);
+
+  const filtered = await (await fetch(
+    `${baseUrl}/api/v1/institutions?type=college_of_health_science_and_technology`,
+  )).json();
+  assert.ok(filtered.results.some((i) => i.slug === slug));
 });
 
 test('GET /api/v1/institutions supports pagination', async () => {

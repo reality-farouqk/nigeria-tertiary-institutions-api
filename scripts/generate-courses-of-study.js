@@ -59,6 +59,14 @@ function qualificationsFor(type, deptName) {
   if (type === 'university') return [inferUniversityQualification(deptName)];
   if (type === 'polytechnic') return ['ND', 'HND'];
   if (type === 'college_of_education') return ['NCE'];
+  // No convention is asserted for college_of_health_science_and_technology.
+  // The other three types each map to an award set taken from the register
+  // they are drawn from; these colleges are accredited outside those registers
+  // and their award set was not verified, so inventing one here would put
+  // unverified programme names in front of students. Returning nothing is not a
+  // gap to be filled in later by guessing — it is the honest state until a
+  // published programme list is to hand. No row is affected today: the single
+  // institution of this type has no departments.
   return [];
 }
 

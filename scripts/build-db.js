@@ -37,6 +37,14 @@ const SOURCES = [
     structureField: 'Schools/Departments',
     hasWebsite: false,
   },
+  {
+    type: 'college_of_health_science_and_technology',
+    file: 'nigerian_colleges_of_health_science_and_technology_schools.csv',
+    nameField: 'Institution Name',
+    stateField: 'State',
+    structureField: 'Schools/Departments',
+    hasWebsite: false,
+  },
 ];
 
 function slugify(str) {
@@ -65,7 +73,7 @@ function main() {
   db.exec(`
     CREATE TABLE institutions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      type TEXT NOT NULL CHECK(type IN ('university','polytechnic','college_of_education')),
+      type TEXT NOT NULL CHECK(type IN ('university','polytechnic','college_of_education','college_of_health_science_and_technology')),
       name TEXT NOT NULL,
       slug TEXT NOT NULL UNIQUE,
       category TEXT,
