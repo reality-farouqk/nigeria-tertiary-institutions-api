@@ -41,7 +41,7 @@ excluded, etc.) — read this before relying on the data for anything important.
 Requires Node.js 18+.
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/nigeria-tertiary-institutions-api.git
+git clone https://github.com/reality-farouqk/nigeria-tertiary-institutions-api.git
 cd nigeria-tertiary-institutions-api
 npm install
 npm start        # builds db/institutions.sqlite from data/*.csv, then starts the API
