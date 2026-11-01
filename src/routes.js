@@ -4,7 +4,12 @@ const express = require('express');
 const db = require('./db');
 const { serializeInstitution } = require('./serialize');
 
-const VALID_TYPES = ['university', 'polytechnic', 'college_of_education'];
+const VALID_TYPES = [
+  'university',
+  'polytechnic',
+  'college_of_education',
+  'college_of_health_science_and_technology',
+];
 const VALID_CATEGORIES = ['Federal', 'State', 'Private'];
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 25;

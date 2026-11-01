@@ -11,6 +11,7 @@ limitations, so you can judge how much to trust any given row.
 | `nigerian_universities_faculties.csv` | 312 | Every NUC-recognized Nigerian university (Federal/State/Private), with faculties/colleges and a website where known. |
 | `nigerian_polytechnics_schools.csv` | 200 | Every NBTE-accredited polytechnic per the NBTE 25th Edition Directory (June 2025), with schools/departments where published. |
 | `nigerian_colleges_of_education_schools.csv` | 240 | Every NCCE-accredited college of education (Federal/State/Private) per the live NCCE accredited-colleges register, with schools/departments where published. |
+| `nigerian_colleges_of_health_science_and_technology_schools.csv` | 1 | Colleges of health science and technology. **Not a register sweep** — see below. |
 
 All three share a compatible shape: `S/N`, a name column, `Category`
 (Federal/State/Private), a location column, `Year Established` (blank where not
@@ -95,6 +96,46 @@ the NCCE register still lists the college as active — it was kept in this file
 with a note rather than dropped into a gap between the two datasets. If you spot
 other institutions in a similar limbo, please open an issue (see
 `CONTRIBUTING.md`).
+
+## Colleges of health science and technology: an open, contributed type
+
+The other three files are register sweeps: a regulator publishes a list, and the
+file is that list. This one is not, and the difference matters more than the row
+count suggests.
+
+Health-sciences colleges — colleges of health science and technology, schools of
+nursing and midwifery, schools of health technology — are accredited by
+professional and health regulatory bodies, not by the NUC, NBTE or NCCE. None of
+the three registers this dataset is built from reaches them, so until now they
+were not under-covered here, they were categorically absent: no re-run of any
+sweep could ever have produced one. A consumer filtering on the three original
+types had no way to tell that absence apart from non-existence.
+
+The type exists because a real institution was found to be missing. **Islamic
+Medical Foundation College of Health Science and Technology** (Musawa Road,
+Kaduna) was recorded in the ArewaUniHub institution catalogue, which imports
+from this API, after a student-facing gap made its absence concrete. It is
+contributed, not swept.
+
+Two consequences, both deliberate:
+
+- **This type is open.** One row is not coverage, and nothing here implies the
+  rest of the category has been looked for. `GET /api/v1/types` is the list to
+  read at runtime; do not hard-code three types, and do not read a count of one
+  as "there is one such college in Nigeria".
+- **No programme convention is asserted.** Every other type maps to an award set
+  taken from its register (`ND`/`HND`, `NCE`, degree qualifications). These
+  colleges were not verified against a published award set, so
+  `qualificationsFor` returns nothing for this type and the row carries no
+  programmes. That is not a gap awaiting a plausible guess: an invented
+  programme name does not stay a guess once a student picks it as their
+  department and attaches material to it. Fill it from a published list or leave
+  it empty.
+
+If you have a verified health-sciences institution to add, open an issue or a PR
+(see `CONTRIBUTING.md`) with the source you used. The structure column follows
+the same rule as everywhere else: prose when nothing is itemized, an itemized
+school/department list only when a source actually publishes one.
 
 ## Course-of-study data: derivation methodology and limitations
 

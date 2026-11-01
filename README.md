@@ -1,8 +1,9 @@
 # Nigeria Tertiary Institutions API
 
 A free, open REST API and dataset covering every Nigerian **university**,
-**polytechnic**, and **college of education** — 752 institutions in total —
-including their faculties/schools/departments where publicly available.
+**polytechnic**, and **college of education**, plus **colleges of health
+science and technology** — 753 institutions in total — including their
+faculties/schools/departments where publicly available.
 
 As far as we could find, there wasn't an existing open API for this — most
 "list of Nigerian universities" resources are static blog posts or PDFs that go
@@ -22,7 +23,13 @@ GET /api/v1/schools?q=Engineering
 | Universities | 312 | 77 | 67 | 168 |
 | Polytechnics | 200 | 41 | 61 | 98 |
 | Colleges of education | 240 | 30 | 43 | 167 |
-| **Total** | **752** | | | |
+| Colleges of health science and technology | 1 | 0 | 0 | 1 |
+| **Total** | **753** | | | |
+
+The first three rows are complete registers. The fourth is not: health-sciences
+colleges are accredited outside the NUC, NBTE and NCCE registers this dataset is
+built from, so there is no single list to work through, and the one row present
+was contributed rather than swept. Treat that type as open, not as coverage.
 
 See [`data/DATA_NOTES.md`](data/DATA_NOTES.md) for full sourcing, methodology,
 and known limitations (which institutions publish a formal faculty/school
@@ -204,7 +211,7 @@ List/search institutions. Query params (all optional, all combinable):
 
 | Param | Example | Description |
 |---|---|---|
-| `type` | `type=polytechnic` | One of `university`, `polytechnic`, `college_of_education` |
+| `type` | `type=polytechnic` | One of `university`, `polytechnic`, `college_of_education`, `college_of_health_science_and_technology`. `GET /api/v1/types` returns the current list — treat it as open, not fixed. |
 | `category` | `category=Federal` | One of `Federal`, `State`, `Private` |
 | `state` | `state=Kano` | Substring match against the state/location field |
 | `q` | `q=Zaria` | Substring match against the institution name |

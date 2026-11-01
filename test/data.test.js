@@ -33,6 +33,10 @@ const FILES = [
   { file: 'nigerian_universities_faculties.csv', structureColumn: 'Faculties' },
   { file: 'nigerian_polytechnics_schools.csv', structureColumn: 'Schools/Departments' },
   { file: 'nigerian_colleges_of_education_schools.csv', structureColumn: 'Schools/Departments' },
+  {
+    file: 'nigerian_colleges_of_health_science_and_technology_schools.csv',
+    structureColumn: 'Schools/Departments',
+  },
 ];
 
 for (const { file, structureColumn } of FILES) {
