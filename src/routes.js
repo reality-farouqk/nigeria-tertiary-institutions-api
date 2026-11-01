@@ -61,7 +61,7 @@ router.get('/', (req, res) => {
       courses_search: '/api/v1/courses?q=&qualification=&department_id=&institution_slug=&page=&limit=',
       course_detail: '/api/v1/courses/:id',
     },
-    docs: 'https://github.com/YOUR_GITHUB_USERNAME/nigeria-tertiary-institutions-api#readme',
+    docs: 'https://github.com/reality-farouqk/nigeria-tertiary-institutions-api#readme',
   });
 });
 

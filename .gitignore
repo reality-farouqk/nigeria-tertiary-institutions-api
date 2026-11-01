@@ -6,4 +6,8 @@ db/*.sqlite-wal
 npm-debug.log*
 .DS_Store
 *.log
+# Every dotenv variant, not just bare `.env`. A live API key reached a public
+# branch through `.env.local`, which the single `.env` line did not cover.
 .env
+.env.*
+!.env.example
