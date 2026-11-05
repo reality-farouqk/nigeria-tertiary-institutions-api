@@ -131,15 +131,35 @@ Two consequences, both deliberate:
   programme name does not stay a guess once a student picks it as their
   department and attaches material to it. Fill it from a published list or leave
   it empty.
-- **A programme list that exists but is not good enough is still prose.** The one
-  row here is the case in point: a directory listing under the college's former
-  Tudun Wada name does itemize five National Diploma programmes, and the
-  structure cell names them. They are not itemized into departments, because a
-  directory entry is not an accreditation record and nothing confirms it against
-  the college. The itemization bar is a source that publishes the structure
-  authoritatively, and "we found a list somewhere" is below it — a parsed
-  department is picked by students and accumulates material under it, so the
-  cost of being wrong is not symmetric with the cost of waiting.
+- **The structure is itemized, on the same basis as every other row.** A
+  directory entry under the college's Tudun Wada name (nextschool.ng, Feb 2025)
+  lists five National Diploma programmes under a School of Health Technology,
+  and the structure cell itemizes them.
+
+  An earlier version of this file said they were deliberately left as prose
+  because a directory entry "is below the bar the other 359 itemized
+  institutions meet". That was wrong, and worth correcting rather than quietly
+  dropping: the bar described under "How the structure column was compiled" is a
+  *published breakdown found by research* — prose is used where no source
+  itemizes a structure, "rather than inventing a structure that isn't supported
+  by a source". The line this dataset draws is sourced against invented, not
+  accredited against unaccredited. A directory listing is on the sourced side,
+  and holding these five to a stricter standard than the rest of the file was an
+  inconsistency, not caution.
+
+  What the source cannot support is still recorded as such: the entry is not an
+  accreditation register, nothing confirms it with the college, and the trailing
+  note says both.
+
+**Open question on the name.** The same directory entry and Wikidata both call
+this institution "College/School of Health Technology, Tudun Wada", not
+"College of Health Science and Technology" on Musawa Road as stored here. The
+stored name has deliberately not been changed: the name determines the slug, the
+slug is what consumers key on, and at least one consumer upserts on it and never
+deletes — so an edit would not rename the row there, it would add a second one
+and leave the first behind. If the Tudun Wada form is confirmed official, it
+wants a deliberate rename plus a merge of the old slug, not an edit to this
+cell.
 
 If you have a verified health-sciences institution to add, open an issue or a PR
 (see `CONTRIBUTING.md`) with the source you used. The structure column follows
