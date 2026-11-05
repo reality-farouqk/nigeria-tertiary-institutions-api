@@ -67,7 +67,7 @@ test('GET /api/v1/types lists every type present in the data', async () => {
   assert.deepEqual(Object.keys(stats.by_type).sort(), [...body.types].sort());
 });
 
-test('a college of health science and technology is served with no invented structure', async () => {
+test('a college of health science and technology is served with its sourced structure', async () => {
   const slug = 'islamic-medical-foundation-college-of-health-science-and-technology';
 
   const res = await fetch(`${baseUrl}/api/v1/institutions/${slug}`);
@@ -77,11 +77,31 @@ test('a college of health science and technology is served with no invented stru
   assert.equal(inst.category, 'Private');
   assert.equal(inst.state, 'Kaduna State');
 
-  // The structure cell is a prose provenance note, not a department list. It
-  // must not be parsed into faculties, because a parsed faculty becomes
-  // something a student picks when uploading material.
   const schools = await (await fetch(`${baseUrl}/api/v1/institutions/${slug}/schools`)).json();
-  assert.deepEqual(schools.schools, []);
+  assert.equal(schools.schools.length, 1);
+  assert.equal(schools.schools[0].name, 'School of Health Technology');
+  assert.deepEqual(
+    schools.schools[0].departments.map((d) => d.name),
+    [
+      'Community Health Technology',
+      'Environmental Health Technology',
+      'Health Education and Promotion',
+      'Health Information Management',
+      'Medical Imaging Technology',
+    ],
+  );
+
+  // The real regression risk for this row is the trailing provenance note, which
+  // is long, comma-heavy and sits after the itemized list. Split on the wrong
+  // separator it becomes extra "departments" — the exact failure the parser's
+  // note filter exists for, and one a student would see as a programme to pick.
+  // Five and only five, with nothing note-shaped among them.
+  const names = schools.schools.flatMap((s) => s.departments.map((d) => d.name));
+  assert.equal(names.length, 5);
+  for (const name of names) {
+    assert.ok(!/Musawa|Kaduna|nextschool|Wikidata|NUC|NBTE|NCCE|confirmed|\d{4}/i.test(name),
+      `"${name}" looks like provenance text parsed as a department`);
+  }
 
   const filtered = await (await fetch(
     `${baseUrl}/api/v1/institutions?type=college_of_health_science_and_technology`,
